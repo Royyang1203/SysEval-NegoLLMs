@@ -7,6 +7,7 @@ Takes in the arguments, evaluates the model, and saves the quantitative results 
 
 from argparse import ArgumentParser
 import os
+from dotenv import load_dotenv
 from registry import SUPPORTED_CONFIGS
 import utils
 import arguments
@@ -91,6 +92,9 @@ def main(args):
 
 
 if __name__ == "__main__":
+    # Load environment variables from .env file
+    load_dotenv()
+    
     parser = ArgumentParser()
     parser = arguments.add_arguments(parser)
 

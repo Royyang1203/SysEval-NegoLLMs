@@ -7,10 +7,33 @@ Takes in the arguments, evaluates the model, and saves the quantitative results 
 
 from argparse import ArgumentParser
 import os
+import logging
 from dotenv import load_dotenv
 from registry import SUPPORTED_CONFIGS
 import utils
 import arguments
+
+
+def setup_logging():
+    """Configure logging with proper formatting."""
+    # Create formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Get root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    
+    # Remove existing handlers to avoid duplicates
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
 
 
 def validate_args(args):
@@ -94,6 +117,9 @@ def main(args):
 if __name__ == "__main__":
     # Load environment variables from .env file
     load_dotenv()
+    
+    # Setup logging configuration
+    setup_logging()
     
     parser = ArgumentParser()
     parser = arguments.add_arguments(parser)

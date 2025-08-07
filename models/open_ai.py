@@ -5,6 +5,7 @@ OpenAI models - GPT and variants.
 
 import openai
 import os
+import logging
 from tqdm import tqdm
 from models.model import BaseModelHandler
 import tiktoken
@@ -15,13 +16,16 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 
 openai.api_key = openai_api_key
 
+# Setup logger
+logger = logging.getLogger(__name__)
+
 class OpenAIHandler(BaseModelHandler):
     """Handler for the OpenAI model."""
 
     multishot = False
     cot=False
 
-    possible_models = ["gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106", "gpt-4-1106-preview"]
+    possible_models = ["gpt-3.5-turbo-0301", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-1106", "gpt-4-1106-preview", "gpt-4o", "gpt-4o-mini"]
 
     token_limit = 4096
 
@@ -29,6 +33,11 @@ class OpenAIHandler(BaseModelHandler):
         """Setup the model."""
 
         self.model = self.args.openai_model_str
+        
+        # Warn if model is not in the list of possible models
+        if self.model not in self.possible_models:
+            logger.warning(f"Model '{self.model}' is not in the list of possible models: {self.possible_models}. "
+                          f"This may cause issues or unexpected behavior.")
 
     def check_prompt(self, prompt):
         """
@@ -137,6 +146,7 @@ class OpenAIHandler(BaseModelHandler):
                     try:
                         a, b = self.check_prompt(prompt)
                         if not a:
+                            logger.warning(f"Token limit exceeded at index {index}/{len(inputs)}: {b} tokens > {self.token_limit} limit")
                             print(f"Length issue at {index}/{len(inputs)}: {b} > {self.token_limit}")
                             continue
 
@@ -151,10 +161,15 @@ class OpenAIHandler(BaseModelHandler):
                         output_text = gen_output["choices"][0]["message"]["content"]
                         outputs[inputs[index]] = output_text
                     except Exception as e:
+                        logger.error(f"Error processing request at index {index}: {e}")
                         print(f"Some error here: {e}")
                         continue
 
                     if (index + 1) >= self.args.max_num_instances:
                         break
 
+        else:
+            logger.error(f"Model '{self.model}' is not supported. Supported models are: {self.possible_models}")
+            return {}
+            
         return outputs
